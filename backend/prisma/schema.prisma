@@ -1,0 +1,170 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                    String         @id @db.Uuid
+  email                 String?
+  name                  String?
+  phone                 String?        @unique
+  source                String         @default("web")
+  notification_enabled  Boolean        @default(true)
+  notification_time     String         @default("09:00")
+  notification_types    String[]       @default(["job", "internship", "hackathon", "scholarship", "fellowship"])
+  created_at            DateTime       @default(now()) @db.Timestamptz
+  updated_at            DateTime       @default(now()) @db.Timestamptz
+  profile               Profile?
+  resumes               Resume[]
+  matches               Match[]
+  applications          Application[]
+  conversations         Conversation[]
+
+  @@map("users")
+}
+
+model Resume {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String   @db.Uuid
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  file_name   String?
+  file_url    String?
+  raw_text    String?
+  parsed_json Json?
+  created_at  DateTime @default(now()) @db.Timestamptz
+  updated_at  DateTime @default(now()) @db.Timestamptz
+
+  @@map("resumes")
+}
+
+model Profile {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id              String   @unique @db.Uuid
+  user                 User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  name                 String?
+  email                String?
+  phone                String?
+  location             String?
+  linkedin             String?
+  github               String?
+  portfolio            String?
+  summary              String?
+  skills               String[] @default([])
+  technical_skills     String[] @default([])
+  soft_skills          String[] @default([])
+  languages            String[] @default([])
+  career_level         String   @default("fresher")
+  target_roles         String[] @default([])
+  industries           String[] @default([])
+  interests            String[] @default([])
+  education            Json     @default("[]")
+  experience           Json     @default("[]")
+  projects             Json     @default("[]")
+  certifications       Json     @default("[]")
+  awards               String[] @default([])
+  publications         String[] @default([])
+  career_score         Int      @default(0)
+  skill_score          Int      @default(0)
+  experience_score     Int      @default(0)
+  education_score      Int      @default(0)
+  profile_completeness Int      @default(0)
+  missing_skills       String[] @default([])
+  career_suggestions   String[] @default([])
+  strengths            String[] @default([])
+  immediate_actions    String[] @default([])
+  roadmap              Json     @default("[]")
+  salary_range         Json?
+  growth_trajectory    String?
+  resume_url           String?
+  raw_text             String?
+  created_at           DateTime @default(now()) @db.Timestamptz
+  updated_at           DateTime @default(now()) @db.Timestamptz
+
+  @@map("profiles")
+}
+
+model Opportunity {
+  id              String        @id
+  title           String
+  company         String?
+  location        String?
+  type            String        @default("job")
+  description     String?
+  required_skills String[]      @default([])
+  career_level    String?
+  url             String?
+  apply_url       String?
+  source          String?
+  posted_date     DateTime?     @db.Timestamptz
+  deadline        DateTime?     @db.Timestamptz
+  last_updated    DateTime      @default(now()) @db.Timestamptz
+  stipend         String?
+  salary          String?
+  prize           String?
+  duration        String?
+  is_active       Boolean       @default(true)
+  created_at      DateTime      @default(now()) @db.Timestamptz
+  matches         Match[]
+  applications    Application[]
+
+  @@map("opportunities")
+}
+
+model Match {
+  id                    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id               String      @db.Uuid
+  user                  User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  opportunity_id        String
+  opportunity           Opportunity @relation(fields: [opportunity_id], references: [id], onDelete: Cascade)
+  match_score           Int         @default(0)
+  eligibility_score     Int         @default(0)
+  skill_overlap         String[]    @default([])
+  missing_skills        String[]    @default([])
+  why_match             String?
+  skills_to_gain        String[]    @default([])
+  career_impact         String?
+  selection_probability String?
+  selection_percentage  Int         @default(50)
+  application_tips      String[]    @default([])
+  expected_growth       String?
+  is_notified           Boolean     @default(false)
+  is_saved              Boolean     @default(false)
+  is_applied            Boolean     @default(false)
+  notified_at           DateTime?   @db.Timestamptz
+  created_at            DateTime    @default(now()) @db.Timestamptz
+  updated_at            DateTime    @default(now()) @db.Timestamptz
+
+  @@unique([user_id, opportunity_id])
+  @@map("user_matches")
+}
+
+model Application {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id        String      @db.Uuid
+  user           User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  opportunity_id String?
+  opportunity    Opportunity? @relation(fields: [opportunity_id], references: [id], onDelete: SetNull)
+  status         String      @default("applied")
+  notes          String?
+  applied_at     DateTime    @default(now()) @db.Timestamptz
+  updated_at     DateTime    @default(now()) @db.Timestamptz
+
+  @@unique([user_id, opportunity_id])
+  @@map("applications")
+}
+
+model Conversation {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String?  @db.Uuid
+  user       User?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  phone      String?
+  role       String
+  message    String
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  @@map("conversations")
+}
