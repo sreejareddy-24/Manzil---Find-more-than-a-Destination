@@ -45,15 +45,19 @@ const Dashboard = () => {
         .catch(err => console.warn('Could not fetch recent trips:', err.message));
     }
   }, [user]);
-  const handlePlanTrip = async () => {
+  const handlePlanTrip = async (e, overrideDest = null, overrideDays = null) => {
+    if (e && e.preventDefault) e.preventDefault();
     setError('');
 
-    if (!destination.trim()) {
+    const finalDest = overrideDest || destination;
+    const finalDays = overrideDays || days;
+
+    if (!finalDest.trim()) {
       setError('Please enter a destination.');
       return;
     }
 
-    if (!days || parseInt(days, 10) <= 0) {
+    if (!finalDays || parseInt(finalDays, 10) <= 0) {
       setError('Please enter a valid number of days.');
       return;
     }
@@ -62,10 +66,10 @@ const Dashboard = () => {
     try {
       const trip = await generateItinerary({
         source,
-        destination,
-        days: parseInt(days, 10),
+        destination: finalDest,
+        days: parseInt(finalDays, 10),
         budget: null,
-        interests: [...interests, `${budget} Budget`],
+        interests: [...interests, `${budget} Budget`, `${travelType} Trip`],
       });
 
       navigate('/itinerary', { state: { trip } });
@@ -248,10 +252,10 @@ const Dashboard = () => {
             </div>
             <div className="suggestion-cards">
               {[
-                { name: 'Goa', emoji: '🏖️', type: 'Beach', rating: 4.8, price: '₹15k' },
-                { name: 'Manali', emoji: '🏔️', type: 'Mountains', rating: 4.9, price: '₹12k' },
-                { name: 'Kerala', emoji: '🛶', type: 'Nature', rating: 4.7, price: '₹18k' },
-                { name: 'Jaipur', emoji: '🕌', type: 'Heritage', rating: 4.6, price: '₹10k' }
+                { name: 'Goa', image: '/goa.png', type: 'Beach', rating: 4.8, price: '₹15k' },
+                { name: 'Manali', image: '/manali.png', type: 'Mountains', rating: 4.9, price: '₹12k' },
+                { name: 'Kerala', image: '/kerala.png', type: 'Nature', rating: 4.7, price: '₹18k' },
+                { name: 'Jaipur', image: '/jaipur.png', type: 'Heritage', rating: 4.6, price: '₹10k' }
               ].map(dest => (
                 <div 
                   key={dest.name} 
@@ -259,10 +263,10 @@ const Dashboard = () => {
                   onClick={() => {
                     setDestination(dest.name);
                     setDays('4');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                 >
-                  <div className="card-img-placeholder">
-                    <div className="emoji-large">{dest.emoji}</div>
+                  <div className="card-img-placeholder" style={{ backgroundImage: `url(${dest.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
                     <Heart className="heart-icon" size={20} />
                     <div className="badge type-badge">{dest.type}</div>
                   </div>
