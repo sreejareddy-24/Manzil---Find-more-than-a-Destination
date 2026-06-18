@@ -1,23 +1,19 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
+from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
 
+# Load .env file manually in case it is not automatically loaded
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
 
 class Settings(BaseSettings):
-    """Centralized app config, populated from environment variables / .env file."""
+    PORT: int = 8000
+    GEMINI_API_KEY: str | None = None
+    SUPABASE_URL: str | None = None
+    SUPABASE_KEY: str | None = None
+    DATABASE_URL: str = "sqlite:///./travel_planner.db"
 
-    GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"
-
-    SUPABASE_URL: str = ""
-    SUPABASE_SERVICE_ROLE_KEY: str = ""
-
-    FRONTEND_ORIGIN: str = "http://localhost:5173"
-
-    model_config = SettingsConfigDict(
-        env_file=".env", 
-        env_file_encoding="utf-8", 
-        extra="ignore"
-    )
-
+    class Config:
+        env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()
-
